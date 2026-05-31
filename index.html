@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SLR Sign Language Learning</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">SLR Project</p>
+        <h1>Sign Language Learning Platform</h1>
+      </div>
+      <nav aria-label="Primary navigation">
+        <a href="#lessons">Lessons</a>
+        <a href="#recognition">Recognition</a>
+        <a href="#practice">Practice</a>
+        <a href="#chatbot">Voice Help</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Learn by seeing, practicing, and asking</p>
+          <h2>Build confident signing skills one gesture at a time.</h2>
+          <p>
+            Explore beginner-friendly modules, test your memory, and use the
+            voice-supported assistant whenever you need guidance.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#lessons">Start Learning</a>
+            <a class="button secondary" href="#practice">Try Quiz</a>
+          </div>
+        </div>
+        <div class="hero-visual" aria-label="Illustration of sign language learning">
+          <div class="hand-card">
+            <span class="hand-symbol">SL</span>
+            <span>Practice daily</span>
+          </div>
+          <div class="lesson-orbit one">A</div>
+          <div class="lesson-orbit two">B</div>
+          <div class="lesson-orbit three">Hi</div>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="Learning stats">
+        <div>
+          <strong id="completedCount">0</strong>
+          <span>Lessons completed</span>
+        </div>
+        <div>
+          <strong id="quizScore">0%</strong>
+          <span>Last quiz score</span>
+        </div>
+        <div>
+          <strong>Voice</strong>
+          <span>Chatbot support</span>
+        </div>
+      </section>
+
+      <section id="lessons" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Smart learning path</p>
+          <h2>Guided modules</h2>
+        </div>
+        <div class="path-steps" aria-label="Learning path overview">
+          <div>
+            <strong>1</strong>
+            <span>Prepare</span>
+          </div>
+          <div>
+            <strong>2</strong>
+            <span>Learn</span>
+          </div>
+          <div>
+            <strong>3</strong>
+            <span>Recognize</span>
+          </div>
+          <div>
+            <strong>4</strong>
+            <span>Review</span>
+          </div>
+        </div>
+        <div id="lessonGrid" class="lesson-grid"></div>
+      </section>
+
+      <section id="recognition" class="section split">
+        <div>
+          <p class="eyebrow">YOLO hand detection</p>
+          <h2>Identify hands in a picture</h2>
+          <p class="muted">
+            Upload an image or use the camera. The app sends the picture to the
+            local YOLO backend and draws detected hands on the preview.
+          </p>
+          <div class="recognition-actions">
+            <label class="button secondary file-picker">
+              Upload Image
+              <input id="imageUpload" type="file" accept="image/*" />
+            </label>
+            <button id="startCamera" class="button primary" type="button">Start Camera</button>
+            <button id="captureFrame" class="button secondary" type="button">Capture</button>
+          </div>
+          <p id="detectorStatus" class="feedback">Detector ready when the backend is running.</p>
+        </div>
+        <div class="recognition-panel">
+          <video id="cameraFeed" autoplay muted playsinline></video>
+          <canvas id="detectorCanvas" width="640" height="420"></canvas>
+          <div id="detectionsList" class="detections-list"></div>
+        </div>
+      </section>
+
+      <section id="practice" class="section split">
+        <div>
+          <p class="eyebrow">Practice mode</p>
+          <h2>Quick sign quiz</h2>
+          <p class="muted">
+            Choose the correct meaning for the shown sign. Your score is saved
+            on this browser.
+          </p>
+        </div>
+        <div class="quiz-panel">
+          <div class="quiz-sign" id="quizSign">A</div>
+          <p id="quizPrompt">What does this sign mean?</p>
+          <div id="quizOptions" class="quiz-options"></div>
+          <p id="quizFeedback" class="feedback" aria-live="polite"></p>
+          <button id="nextQuestion" class="button primary" type="button">Next Question</button>
+        </div>
+      </section>
+
+      <section id="chatbot" class="section chatbot-section">
+        <div class="section-heading">
+          <p class="eyebrow">Voice support</p>
+          <h2>Help chatbot</h2>
+        </div>
+        <div class="chatbot">
+          <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+          <form id="chatForm" class="chat-form">
+            <input
+              id="chatInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Ask about lessons, practice, or sign language basics"
+              aria-label="Message"
+            />
+            <button id="voiceButton" class="icon-button" type="button" title="Speak your question">Mic</button>
+            <button class="button primary" type="submit">Send</button>
+          </form>
+          <label class="voice-toggle">
+            <input id="speakReplies" type="checkbox" checked />
+            Speak chatbot replies
+          </label>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
