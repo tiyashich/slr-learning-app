@@ -2,7 +2,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 from ml_pipeline import (
     CLASSIFIER_MODEL_PATH,
@@ -19,41 +18,76 @@ MODULES = [
     {
         "title": "1. Camera and Hand Setup",
         "type": "Foundation",
+        "target_class": None,
         "goal": "Make the hand clear for both learners and the model.",
         "lesson": "Before learning signs, prepare your space. Use a plain background, keep your hand inside the frame, and avoid shadows.",
+        "concepts": [
+            "Signs are visual, so clarity matters as much as memory.",
+            "A plain background helps learners focus on hand shape.",
+            "Good lighting helps the recognition model find the hand boundary.",
+        ],
         "tasks": ["Use a plain background", "Keep the full hand visible", "Avoid blur and shadows"],
+        "mistakes": ["Hand partly outside frame", "Backlight behind the hand", "Fast movement causing blur"],
         "prompt": "Show your hand to the camera with fingers visible and wrist relaxed.",
     },
     {
         "title": "2. Classes 0-9",
         "type": "Alphabet Practice",
+        "target_class": "0",
         "goal": "Build confidence with a small class group first.",
         "lesson": "Start with the first ten sign classes. Practice slowly so your fingers form a consistent shape each time.",
+        "concepts": [
+            "Learn signs in small groups instead of trying all 49 at once.",
+            "Hold each sign for two seconds before changing.",
+            "Use the same camera distance while practicing one group.",
+        ],
         "tasks": ["Practice each sign five times", "Capture a test image", "Repeat weak classes"],
+        "mistakes": ["Changing signs too quickly", "Not checking palm direction", "Practicing too many signs in one sitting"],
         "prompt": "Choose one class from zero to nine and repeat it five times.",
     },
     {
         "title": "3. Classes 10-24",
         "type": "Recognition Practice",
+        "target_class": "10",
         "goal": "Compare similar signs and improve precision.",
         "lesson": "The middle class group may contain signs that look similar. Compare finger spacing, palm angle, and wrist position.",
+        "concepts": [
+            "Similar signs should be practiced side by side.",
+            "Small finger differences can change the class prediction.",
+            "Confidence improves when your hand shape is consistent.",
+        ],
         "tasks": ["Check model confidence", "Adjust hand angle", "Record confusing classes"],
+        "mistakes": ["Ignoring low-confidence predictions", "Only practicing easy signs", "Not recording confusing pairs"],
         "prompt": "Practice two similar classes back to back and note what changes.",
     },
     {
         "title": "4. Classes 25-48",
         "type": "Full Model Practice",
+        "target_class": "25",
         "goal": "Use the complete XceptionNet class set.",
         "lesson": "Now use the full model range. Work in small batches so you can remember which signs need more practice.",
+        "concepts": [
+            "Full-set practice is best after smaller groups feel stable.",
+            "Batch practice prevents fatigue and sloppy hand shapes.",
+            "A weak class list helps you personalize review.",
+        ],
         "tasks": ["Practice in batches", "Retest low-confidence signs", "Aim for stable predictions"],
+        "mistakes": ["Rushing through all classes", "Skipping rest breaks", "Treating one correct prediction as mastery"],
         "prompt": "Practice five advanced classes and retest the hardest one.",
     },
     {
         "title": "5. Review and Quiz",
         "type": "Retention",
+        "target_class": None,
         "goal": "Turn model feedback into learning progress.",
         "lesson": "Review turns practice into memory. Focus on weak signs, quiz yourself, then repeat the signs with lower confidence.",
+        "concepts": [
+            "Review should focus on signs you miss, not only signs you like.",
+            "Short daily practice is stronger than one long weekly session.",
+            "A quiz checks memory without depending on the camera.",
+        ],
         "tasks": ["Review missed signs", "Take the quiz", "Complete a daily 10-minute session"],
+        "mistakes": ["No review list", "Only using recognition without recall", "Practicing without a goal"],
         "prompt": "Write down three signs that need review today.",
     },
 ]
@@ -76,6 +110,15 @@ QUIZ = [
     },
 ]
 
+GLOSSARY = {
+    "Handshape": "The shape made by the fingers and palm. It is one of the most important parts of a sign.",
+    "Palm orientation": "The direction your palm faces, such as forward, inward, up, or down.",
+    "Movement": "The path or motion used while signing. Some signs are static, while others move.",
+    "Location": "Where the sign is made relative to the body or camera frame.",
+    "Confidence": "The model's estimated certainty for a prediction. Low confidence means the sign needs another look.",
+    "Review set": "A personal list of signs that need more practice.",
+}
+
 st.title("SLR Sign Language Learning Platform")
 st.caption("Interactive lessons, vocal assistance, quizzes, review, and optional YOLO plus XceptionNet recognition.")
 
@@ -89,14 +132,14 @@ with st.sidebar:
         st.write("XceptionNet classifier")
         st.code(str(CLASSIFIER_MODEL_PATH))
 
-tab_lessons, tab_assistant, tab_quiz, tab_upload, tab_camera, tab_review = st.tabs(
-    ["Learning Modules", "Voice Assistant", "Quiz", "Image Recognition", "Camera Practice", "Review"]
+tab_lessons, tab_library, tab_practice, tab_assistant, tab_quiz, tab_upload, tab_review = st.tabs(
+    ["Learning Modules", "Content Library", "ML Practice Lab", "Voice Assistant", "Quiz", "Image Recognition", "Review"]
 )
 
 
 def speak_button(text, key):
     safe_text = text.replace("\\", "\\\\").replace("`", "\\`")
-    components.html(
+    st.iframe(
         f"""
         <button id="speak-{key}" style="
             background:#126c75;color:white;border:0;border-radius:8px;
@@ -156,6 +199,59 @@ def render_prediction(image_bytes, suffix=".jpg"):
         temp_path.unlink(missing_ok=True)
 
 
+def evaluate_gesture(image_bytes, expected_class, suffix=".jpg"):
+    if cv2 is None:
+        st.warning("Gesture checking needs the local ML environment. The cloud version keeps the lessons active without recognition.")
+        return
+
+    with NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+        temp_path = Path(temp_file.name)
+        temp_file.write(image_bytes)
+
+    try:
+        try:
+            with st.spinner("Checking your gesture..."):
+                detections = detect_and_classify(temp_path, confidence=confidence)
+                image = cv2.imread(str(temp_path))
+                annotated = draw_detections(image, detections)
+                annotated = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
+        except Exception as exc:
+            st.error("The ML check failed before it could score the gesture.")
+            st.exception(exc)
+            return
+
+        st.image(annotated, caption="Gesture check", use_container_width=True)
+
+        classifications = [
+            detection.get("classification")
+            for detection in detections
+            if detection.get("classification")
+        ]
+
+        if not detections:
+            st.error("I could not detect a hand. Move closer, improve lighting, and keep the full hand inside the frame.")
+            return
+
+        if not classifications:
+            st.error("I found a hand, but could not classify the sign. Try holding the gesture more steadily.")
+            return
+
+        best = max(classifications, key=lambda item: item["confidence"])
+        if best["label"] == expected_class:
+            st.success(
+                f"Correct gesture. The model predicted class {best['label']} "
+                f"with {best['confidence']:.1%} confidence."
+            )
+        else:
+            st.error(
+                f"Not yet. Expected class {expected_class}, but the model predicted "
+                f"class {best['label']} with {best['confidence']:.1%} confidence."
+            )
+            st.write("Adjust finger shape, palm direction, and camera framing, then try again.")
+    finally:
+        temp_path.unlink(missing_ok=True)
+
+
 with tab_lessons:
     st.subheader("Smart Module Path")
     completed = 0
@@ -168,11 +264,64 @@ with tab_lessons:
             st.write(module["lesson"])
             speak_button(f"{module['title']}. {module['lesson']} Practice prompt: {module['prompt']}", f"module-{index}")
             st.info(module["prompt"])
-            for task in module["tasks"]:
-                st.write(f"- {task}")
+            left, middle, right = st.columns(3)
+            with left:
+                st.markdown("**Key Concepts**")
+                for concept in module["concepts"]:
+                    st.write(f"- {concept}")
+            with middle:
+                st.markdown("**Practice Steps**")
+                for task in module["tasks"]:
+                    st.write(f"- {task}")
+            with right:
+                st.markdown("**Avoid**")
+                for mistake in module["mistakes"]:
+                    st.write(f"- {mistake}")
+
+            if module["target_class"] is not None:
+                st.markdown("**ML Practice**")
+                st.write(
+                    f"Go to **ML Practice Lab**, choose class {module['target_class']}, "
+                    "capture your gesture, and the model will check it."
+                )
+            else:
+                st.markdown("**Readiness Check**")
+                st.write("This module prepares you for ML-based gesture checking in the next lessons.")
 
     st.progress(completed / len(MODULES))
     st.write(f"{completed} of {len(MODULES)} modules marked complete.")
+
+with tab_library:
+    st.subheader("Learning Content Library")
+    st.write("Use this section as a reference while practicing signs.")
+    selected_module = st.selectbox("Choose a lesson topic", [module["title"] for module in MODULES])
+    module = next(item for item in MODULES if item["title"] == selected_module)
+    st.markdown(f"**Lesson:** {module['lesson']}")
+    st.markdown(f"**Goal:** {module['goal']}")
+    st.markdown("**Drill:**")
+    st.write(module["prompt"])
+    speak_button(f"{module['lesson']} Drill: {module['prompt']}", "library")
+
+    st.divider()
+    st.subheader("Glossary")
+    for term, definition in GLOSSARY.items():
+        with st.expander(term):
+            st.write(definition)
+
+with tab_practice:
+    st.subheader("ML Practice Lab")
+    st.write("Pick the sign class you want to practice, capture your gesture, and let the model check it.")
+    target_class = st.selectbox("Target sign class", [str(value) for value in range(49)], key="practice-target")
+    st.info(
+        f"Make sign class {target_class}. Keep the full hand visible, hold still, then capture."
+    )
+    speak_button(
+        f"Practice sign class {target_class}. Keep your full hand visible, hold still, then capture the image.",
+        "practice-lab",
+    )
+    captured = st.camera_input("Capture your gesture", key="practice-camera")
+    if captured:
+        evaluate_gesture(captured.getvalue(), target_class, ".jpg")
 
 with tab_assistant:
     st.subheader("Vocal Learning Assistant")
@@ -211,15 +360,6 @@ with tab_upload:
     uploaded = st.file_uploader("Upload a hand sign image", type=["jpg", "jpeg", "png", "webp"])
     if uploaded:
         render_prediction(uploaded.getvalue(), Path(uploaded.name).suffix)
-
-with tab_camera:
-    st.subheader("Camera Practice")
-    st.write("Capture a sign, inspect the prediction, then adjust your hand shape or framing.")
-    if cv2 is None:
-        st.info("Camera classification needs the local ML environment from requirements-ml.txt.")
-    captured = st.camera_input("Capture a sign image")
-    if captured:
-        render_prediction(captured.getvalue(), ".jpg")
 
 with tab_review:
     st.subheader("Daily Review")
