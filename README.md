@@ -51,7 +51,7 @@ $env:SLR_CLASSIFIER_MODEL="D:\Major Project\CNN Classification Pipeline\xception
 Install Python 3.11 first if it is not available on your PATH. TensorFlow and Ultralytics may fail on newer Python versions. Then run:
 
 ```powershell
-pip install -r requirements.txt
+pip install -r requirements-ml.txt
 uvicorn server:app --reload
 ```
 
@@ -71,7 +71,7 @@ Streamlit is the easiest local demo for the ML part. Use Python 3.11:
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-ml.txt
 python -m streamlit run streamlit_app.py
 ```
 
@@ -99,3 +99,5 @@ streamlit_app.py
 ```
 
 as the app entry file. The included `runtime.txt` asks Streamlit to use Python 3.11.9.
+
+Streamlit Cloud may use a newer Python runtime. To keep deployment reliable, `requirements.txt` installs the lightweight learning app only. The full ML stack is in `requirements-ml.txt` for local runs or a cloud environment that supports Python 3.11.

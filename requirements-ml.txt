@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+python-multipart
+ultralytics
+tensorflow==2.15.1
+opencv-python
+numpy
+streamlit

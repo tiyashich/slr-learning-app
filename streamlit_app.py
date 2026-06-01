@@ -64,6 +64,13 @@ tab_lessons, tab_upload, tab_camera, tab_review = st.tabs(
 
 
 def render_prediction(image_bytes, suffix=".jpg"):
+    if cv2 is None:
+        st.error(
+            "The cloud demo is running without ML packages. Use the Learning Modules tab, "
+            "or install requirements-ml.txt locally to enable recognition."
+        )
+        return
+
     with NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
         temp_path = Path(temp_file.name)
         temp_file.write(image_bytes)
@@ -113,6 +120,8 @@ with tab_lessons:
 with tab_upload:
     st.subheader("Practice With Uploaded Images")
     st.write("Use this after a module to check whether the detector and classifier understand your sign.")
+    if cv2 is None:
+        st.info("Recognition is disabled in the lightweight cloud deployment. The learning modules still work.")
     uploaded = st.file_uploader("Upload a hand sign image", type=["jpg", "jpeg", "png", "webp"])
     if uploaded:
         render_prediction(uploaded.getvalue(), Path(uploaded.name).suffix)
@@ -120,6 +129,8 @@ with tab_upload:
 with tab_camera:
     st.subheader("Camera Practice")
     st.write("Capture a sign, inspect the prediction, then adjust your hand shape or framing.")
+    if cv2 is None:
+        st.info("Camera classification needs the local ML environment from requirements-ml.txt.")
     captured = st.camera_input("Capture a sign image")
     if captured:
         render_prediction(captured.getvalue(), ".jpg")
