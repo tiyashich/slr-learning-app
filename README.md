@@ -1,6 +1,6 @@
 # SLR Sign Language Learning App
 
-This app combines a sign language learning platform, a voice-supported help chatbot, YOLO hand detection, and XceptionNet sign classification for uploaded or captured images.
+This app combines an interactive sign language learning platform, browser-based vocal assistance, quizzes, review planning, YOLO hand detection, and XceptionNet sign classification for uploaded or captured images.
 
 ## Files
 
@@ -65,7 +65,7 @@ The Recognition section sends images to `/api/detect`. The backend detects hand 
 
 ## Run Streamlit App
 
-Streamlit is the easiest local demo for the ML part. Use Python 3.11:
+Streamlit is the easiest app experience. The cloud version runs the learning platform, vocal guidance, quizzes, and review tools. Use Python 3.11 locally for full ML recognition:
 
 ```powershell
 py -3.11 -m venv .venv
